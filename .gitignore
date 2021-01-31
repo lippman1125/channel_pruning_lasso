@@ -1,0 +1,6 @@
+.idea/
+__pycache__/
+.DS_Store
+._.DS_Store
+*.pth.tar
+*.pth
