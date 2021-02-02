@@ -19,6 +19,7 @@ class Pruner(metaclass=ABCMeta):
 class LassoPruner(Pruner):
     def __init__(self, config):
         super(LassoPruner, self).__init__()
+        self.config = config
         self.device = config.device
         self.model = config.model.to(self.device)
         self.ckpt = config.ckpt
@@ -139,6 +140,11 @@ class LassoPruner(Pruner):
             print('Layer NO.{} {}'.format(idx, m_list[idx].__class__.__name__))
             print('\tinput_feat shape : {}'.format(self.layer_info_dict[idx]['input_feat'].shape))
             print('\toutput_feat shape : {}'.format(self.layer_info_dict[idx]['output_feat'].shape))
+
+        if self.config.fmap_save:
+            import pickle
+            with open(os.path.join(self.config.fmap_save_path, "fmap.pkl"), 'wb') as f:
+                pickle.dump(self.layer_info_dict, f, pickle.HIGHEST_PROTOCOL)
 
 
     def _prune_prev_layer(self, layer_ind, weights, filter_inds):
