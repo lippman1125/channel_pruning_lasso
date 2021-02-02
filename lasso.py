@@ -161,5 +161,6 @@ def weight_reconstruction(X, Y, W, keep_inds, debug=False):
         # r2 score: the higher the better
         # r2 = 1 - MSE/VAR
         print("r2 score: {}".format(r2_score(w_reg.predict(X_mask), Y)))
+        print("RME: {}".format(mean_squared_error(w_reg.predict(X_mask), Y)))
 
     return rec_weight

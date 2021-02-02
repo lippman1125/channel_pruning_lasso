@@ -67,12 +67,14 @@ cfgs = {
     'B': [64, 64, 'M', 128, 128, 'M', 256, 256, 'M', 512, 512, 'M', 512, 512, 'M'],
     'D': [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 'M', 512, 512, 512, 'M', 512, 512, 512, 'M'],
     'E': [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 256, 'M', 512, 512, 512, 512, 'M', 512, 512, 512, 512, 'M'],
+    'P': [17, 17, 'M', 37, 47, 'M', 83, 89, 106, 'M', 175, 192, 227, 'M', 512, 512, 512, 'M'],
 }
 cfgs_linear = {
     'A': [4096, 4096],
     'B': [4096, 4096],
     'D': [4096, 4096],
     'E': [4096, 4096],
+    'P': [4096, 4096],
 }
 
 
@@ -122,6 +124,12 @@ def vgg16_bn():
     """
     return _vgg('vgg16_bn', 'D', True)
 
+def vgg16_bn_p():
+    r"""VGG 16-layer model (configuration "D") with batch normalization
+    `"Very Deep Convolutional Networks For Large-Scale Image Recognition" <https://arxiv.org/pdf/1409.1556.pdf>`_
+    """
+    return _vgg('vgg16_bn', 'P', True)
+
 
 def vgg19():
     r"""VGG 19-layer model (configuration "E")
@@ -138,6 +146,14 @@ def vgg19_bn():
 
 
 if __name__ == '__main__':
-    net = vgg16()
-    print(net(torch.randn((1,3,224,224))))
+    from thop import profile
+    net = vgg16_bn()
+    for i, m in enumerate(net.modules()):
+        if type(m) == torch.nn.Conv2d:
+            print(i, m)
+    # # print(net(torch.randn((1,3,224,224))))
+    # input = torch.randn((1,3,224,224))
+    # flops, params = profile(net, (input,), verbose=False)
+    # print("=>PARAMS: {:.3f} M, FLOPS: {:.3f} M".format(params / 1e6, flops / 1e6))
+
 

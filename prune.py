@@ -2,16 +2,18 @@ import os
 import torch
 import numpy as np
 import torch.nn as nn
-from utils import feature_sample
+from extract import feature_sample
 from lasso import channel_pruning, weight_reconstruction
 from abc import ABCMeta, abstractclassmethod
+from copy import deepcopy
+from utils.utils import AverageMeter, accuracy, progress_bar
 
 class Pruner(metaclass=ABCMeta):
     @abstractclassmethod
     def prune_layer(self, idx, ratio):
         pass
     @abstractclassmethod
-    def prune(self, ratio):
+    def prune(self, ratios):
         pass
 
 class LassoPruner(Pruner):
@@ -25,6 +27,8 @@ class LassoPruner(Pruner):
         self.n_points_per_layer = config.n_points_per_layer
         self.prunable_layer_types = config.prunable_layer_types
         self.calib_batch = config.calib_batch
+        self.criterion = config.criterion
+        self.policy = config.policy
         self._load_checkpoint()
         self._build_index()
         self._extract_layer_info()
@@ -39,6 +43,7 @@ class LassoPruner(Pruner):
            checkpoint = checkpoint['state_dict']
         checkpoint = {k.replace('module.', ''): v for k, v in checkpoint.items()}
         self.model.load_state_dict(checkpoint)
+        self.pruned_model = deepcopy(self.model)
 
     def _build_index(self):
         self.prunable_idx = []
@@ -136,6 +141,10 @@ class LassoPruner(Pruner):
             print('\toutput_feat shape : {}'.format(self.layer_info_dict[idx]['output_feat'].shape))
 
 
+    def _prune_prev_layer(self, layer_ind, weights, filter_inds):
+        if self.policy is not None:
+            self.policy(self.pruned_model, layer_ind, weights, filter_inds, self.device)
+
     def prune_layer(self, idx, sparsity_ratio):
         if sparsity_ratio == 0 or sparsity_ratio == 1:
             return
@@ -147,8 +156,36 @@ class LassoPruner(Pruner):
             W = op.weight.data.cpu().numpy()
             n, c = W.shape[0], W.shape[1]
             c_new = int(c*(1-sparsity_ratio))
-            keep_inds, keep_num = channel_pruning(X, Y, W, c_new, debug=True)
-            W_rec = weight_reconstruction(X, Y, W, keep_inds, debug=True)
+            keep_inds, keep_num = channel_pruning(X, Y, W, c_new, debug=False)
+            W_rec= weight_reconstruction(X, Y, W, keep_inds, debug=False)
+            # # assign new weight to pruned model
+            # p_op = list(self.pruned_model.modules())[idx]
+            # p_op.weight.data = torch.from_numpy(W_rec).to(self.device)
+            self._prune_prev_layer(idx, W_rec, keep_inds)
+            return c, W, keep_num, W_rec
 
-    def prune(self, ratio):
-        pass
+    def prune(self, ratios):
+        for idx, ratio in ratios.items():
+            print("pruning layer {}, remain ratio {}".format(idx, ratio))
+            self.prune_layer(idx, ratio)
+
+    def metric(self,):
+        if self.val_dataloader is not None and self.criterion is not None:
+            losses = AverageMeter()
+            top1 = AverageMeter()
+            top5 = AverageMeter()
+            self.pruned_model.eval()
+            with torch.no_grad():
+                for batch_idx, (inputs, targets) in enumerate(self.val_dataloader):
+                    inputs, targets = inputs.to(self.device), targets.to(self.device)
+                    outputs = self.pruned_model(inputs)
+                    loss = self.criterion(outputs, targets)
+
+                    # measure accuracy and record loss
+                    prec1, prec5 = accuracy(outputs.data, targets.data, topk=(1, 5))
+                    losses.update(loss.item(), inputs.size(0))
+                    top1.update(prec1.item(), inputs.size(0))
+                    top5.update(prec5.item(), inputs.size(0))
+
+                    progress_bar(batch_idx, len(self.val_dataloader), 'Loss: {:.3f} | Acc1: {:.3f}% | Acc5: {:.3f}%'
+                                 .format(losses.avg, top1.avg, top5.avg))

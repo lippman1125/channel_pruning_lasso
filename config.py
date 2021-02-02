@@ -5,13 +5,15 @@ class PruneConfig(object):
         self.prunable_layer_types = [torch.nn.modules.conv.Conv2d, torch.nn.modules.linear.Linear]
         self.calib_batch = 10
         self.device = 'cuda'
+        self.policy = None
 
 
 class LassoPruneConfig(PruneConfig):
-    def __init__(self, model, ckpt, train_dataloader, val_dataloader=None):
+    def __init__(self, model, ckpt, train_dataloader, val_dataloader=None, criterion=None, policy=None):
         super(LassoPruneConfig, self).__init__()
         self.model = model
         self.ckpt = ckpt
         self.train_dataloader = train_dataloader
         self.val_dataloader = val_dataloader
-
+        self.criterion = criterion
+        self.policy = policy
