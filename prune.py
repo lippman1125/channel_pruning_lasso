@@ -3,7 +3,8 @@ import torch
 import numpy as np
 import torch.nn as nn
 from extract import feature_sample
-from lasso import channel_pruning, weight_reconstruction
+from pruners.factory import get_pruner
+from reconstruct import weight_reconstruction
 from abc import ABCMeta, abstractclassmethod
 from copy import deepcopy
 from utils.utils import AverageMeter, accuracy, progress_bar
@@ -30,6 +31,7 @@ class LassoPruner(Pruner):
         self.calib_batch = config.calib_batch
         self.criterion = config.criterion
         self.policy = config.policy
+        self.pruner = get_pruner(self.config.pruner)
         self._load_checkpoint()
         self._build_index()
         self._extract_layer_info()
@@ -162,7 +164,8 @@ class LassoPruner(Pruner):
             W = op.weight.data.cpu().numpy()
             n, c = W.shape[0], W.shape[1]
             c_new = int(c*(1-sparsity_ratio))
-            keep_inds, keep_num = channel_pruning(X, Y, W, c_new, debug=False)
+            # keep_inds, keep_num = lasso_pruning(X, Y, W, c_new, debug=False)
+            keep_inds, keep_num = self.pruner(X, Y, W, c_new, debug=True)
             W_rec= weight_reconstruction(X, Y, W, keep_inds, debug=False)
             # # assign new weight to pruned model
             # p_op = list(self.pruned_model.modules())[idx]
@@ -172,7 +175,7 @@ class LassoPruner(Pruner):
 
     def prune(self, ratios):
         for idx, ratio in ratios.items():
-            print("pruning layer {}, remain ratio {}".format(idx, ratio))
+            print("pruning layer {}, pruning ratio {}".format(idx, ratio))
             self.prune_layer(idx, ratio)
 
     def metric(self,):

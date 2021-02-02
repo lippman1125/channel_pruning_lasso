@@ -11,7 +11,7 @@ class PruneConfig(object):
 
 
 class LassoPruneConfig(PruneConfig):
-    def __init__(self, model, ckpt, train_dataloader, val_dataloader=None, criterion=None, policy=None):
+    def __init__(self, model, ckpt, train_dataloader, pruner="lasso",  val_dataloader=None, criterion=None, policy=None):
         super(LassoPruneConfig, self).__init__()
         self.model = model
         self.ckpt = ckpt
@@ -19,3 +19,4 @@ class LassoPruneConfig(PruneConfig):
         self.val_dataloader = val_dataloader
         self.criterion = criterion
         self.policy = policy
+        self.pruner = pruner
