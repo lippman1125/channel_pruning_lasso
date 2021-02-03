@@ -112,4 +112,5 @@ def lasso_pruning(X, Y, W, c_new, alpha=1e-4, tolerance=0.02, debug=False):
         print('Lasso Regression time: %.2f s' % (toc - tic))
         print('Chn keep idx: {}'.format(keep_inds))
         print(c_new, keep_num)
+    print("orig chn num = {} keep chn num = {}".format(c_in, keep_num))
     return keep_inds, keep_num

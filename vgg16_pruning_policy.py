@@ -21,7 +21,7 @@ def vgg16_pruning_policy(model, layer_index, weights, filter_index, device):
     # find prev conv, because we prune channel of present conv and prune filters of prev conv simutaneously
     while layer_index + offset >= 0:
         prev_op = list(model.modules())[layer_index + offset]
-        print(prev_op)
+        # print(prev_op)
         if type(prev_op) == nn.Conv2d or type(prev_op) == nn.Linear:
             prev_op.weight.data = torch.from_numpy(prev_op.weight.data.cpu().numpy()[filter_index]).to(device)
             if prev_op.bias is not None:
