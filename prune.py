@@ -34,7 +34,10 @@ class LassoPruner(Pruner):
         self.pruner = get_pruner(self.config.pruner)
         self._load_checkpoint()
         self._build_index()
-        self._extract_layer_info()
+        if self.config.fmap_path is not None:
+            self._load_layer_info(self.config.fmap_path)
+        else:
+            self._extract_layer_info()
 
     def set_method(self):
         pass
@@ -67,6 +70,11 @@ class LassoPruner(Pruner):
 
         for i in range(len(self.prunable_idx)):
             print('=> Prunable layer idx: {} op type: {}'.format(self.prunable_idx[i], self.prunable_ops[i]))
+
+    def _load_layer_info(self, path):
+        print("=> load layer info")
+        from utils.fmap_load import fmap_load
+        self.layer_info_dict = fmap_load(path)
 
     def _extract_layer_info(self):
         m_list = list(self.model.modules())
@@ -165,7 +173,7 @@ class LassoPruner(Pruner):
             n, c = W.shape[0], W.shape[1]
             c_new = int(c*(1-sparsity_ratio))
             # keep_inds, keep_num = lasso_pruning(X, Y, W, c_new, debug=False)
-            keep_inds, keep_num = self.pruner(X, Y, W, c_new, debug=True)
+            keep_inds, keep_num = self.pruner(X, Y, W, c_new, debug=False)
             W_rec= weight_reconstruction(X, Y, W, keep_inds, debug=False)
             # # assign new weight to pruned model
             # p_op = list(self.pruned_model.modules())[idx]

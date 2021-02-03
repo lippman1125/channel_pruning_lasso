@@ -26,17 +26,17 @@ def l1norm_pruning(X, Y, W, c_new, debug=False):
     # conv
     if len(W.shape) == 4:
         # Filter_NUM Channel_NUM H W
-        filter_norm = np.sum(W, (1,2,3))
+        channel_norm = np.abs(W).sum((0,2,3))
     else:
         # linear
         # output_dims input_dims
-        filter_norm = np.sum(W, axis=0).transpose()
+        channel_norm = np.abs(W).sum(axis=1)
 
 
-    keep_inds = np.argsort(-filter_norm)[:keep_num]
+    keep_inds = np.argsort(-channel_norm)[:keep_num]
 
     if debug:
-        print("Filter norm: {}".format(filter_norm))
+        print("Channel norm: {}".format(channel_norm))
         print('Chn keep idx: {}'.format(keep_inds))
         print(c_new, keep_num)
     return keep_inds, keep_num

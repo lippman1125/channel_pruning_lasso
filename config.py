@@ -3,7 +3,7 @@ class PruneConfig(object):
     def __init__(self):
         self.n_points_per_layer = 1
         self.prunable_layer_types = [torch.nn.modules.conv.Conv2d, torch.nn.modules.linear.Linear]
-        self.calib_batch = 20
+        self.calib_batch = 25
         self.device = 'cuda'
         self.policy = None
         self.fmap_save = True
@@ -11,7 +11,7 @@ class PruneConfig(object):
 
 
 class LassoPruneConfig(PruneConfig):
-    def __init__(self, model, ckpt, train_dataloader, pruner="lasso",  val_dataloader=None, criterion=None, policy=None):
+    def __init__(self, model, ckpt, train_dataloader, pruner="lasso", val_dataloader=None, criterion=None, policy=None):
         super(LassoPruneConfig, self).__init__()
         self.model = model
         self.ckpt = ckpt
@@ -20,3 +20,4 @@ class LassoPruneConfig(PruneConfig):
         self.criterion = criterion
         self.policy = policy
         self.pruner = pruner
+        self.fmap_path = fmap_path
