@@ -49,7 +49,7 @@ lassopruner_config = LassoPruneConfig(vgg16,
                                       val_dataloader=val_loader,
                                       criterion=nn.CrossEntropyLoss(),
                                       policy=vgg16_pruning_policy,
-                                      fmap_path='fmap.pkl')
+                                      fmap_path="fmap_5000.pkl")
 lassopruner = LassoPruner(lassopruner_config)
 
 # vgg16_ratios = {5: 17/64, 9: 37/128, 12: 47/128, 16: 83/256, 19: 89/256, 22: 106/256,
@@ -57,15 +57,28 @@ lassopruner = LassoPruner(lassopruner_config)
 
 # vgg16_ratios = {5: 17/64, 9: 37/128, 12: 47/128, 16: 83/256, 19: 89/256, 22: 106/256,
 #                  26: 175/512, 29: 192/512, 32: 227/512}
+# config 1, top1 63.536%
+'''
 vgg16_ratios = { 5: 0.5,
                  9: 0.5, # conv2
                  12: 0.5,
-                 16: 0.5, # conv3
-                 19: 0.5,
+                 16: 0.4, # conv3
+                 19: 0.4,
                  22: 0.4,
                  26: 0.2, # conv4
                  29: 0.2,
                  32: 0.2
+                 }
+'''
+vgg16_ratios = { 5: 0.5,
+                 9: 0.5, # conv2
+                12: 0.5,
+                16: 0.5, # conv3
+                19: 0.5,
+                22: 0.5,
+                26: 0.2, # conv4
+                29: 0.2,
+                32: 0.2
                  }
 
 # vgg16_ratios = {5: 0.5, 9: 0.5, 16: 0.4, 19: 0.5, 22: 0.4, 29: 0.4}
