@@ -84,7 +84,6 @@ def train(epoch, train_loader):
     top1 = AverageMeter()
     top5 = AverageMeter()
     end = time.time()
-
     for batch_idx, (inputs, targets) in enumerate(train_loader):
         optimizer.zero_grad()
         if use_cuda:
@@ -251,8 +250,8 @@ if __name__ == '__main__':
 
     print('=> Preparing data..')
     # get dir
-    traindir = os.path.join(args.dataset, 'train')
-    valdir = os.path.join(args.dataset, 'val')
+    traindir = os.path.join(args.data_root, 'train')
+    valdir = os.path.join(args.data_root, 'val')
 
     # preprocessing
     input_size = 224
@@ -281,9 +280,12 @@ if __name__ == '__main__':
 
     net = get_model()  # for measure
     IMAGE_SIZE = 224 if args.dataset == 'imagenet' else 32
-    n_flops, n_params = profile(net, (torch.rand((1, 3, IMAGE_SIZE, IMAGE_SIZE)), ), verbose=False)
+    dummy = torch.rand((1, 3, IMAGE_SIZE, IMAGE_SIZE)).to(device)
+    n_flops, n_params = profile(net, (dummy, ), verbose=False)
     print('=> Model Parameter: {:.3f} M, FLOPs: {:.3f}M'.format(n_params / 1e6, n_flops / 1e6))
+    del net
 
+    net = get_model()
 
     if args.ckpt_path is not None:  # assigned checkpoint path to resume from
         print('=> Resuming from checkpoint..')
@@ -293,6 +295,8 @@ if __name__ == '__main__':
 
     if use_cuda and args.n_gpu > 1:
         net = torch.nn.DataParallel(net, list(range(args.n_gpu)))
+    elif use_cuda:
+        net.cuda()
 
     criterion = nn.CrossEntropyLoss()
     print('Using SGD...')
