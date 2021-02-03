@@ -153,7 +153,7 @@ class LassoPruner(Pruner):
 
         if self.config.fmap_save:
             import pickle
-            with open(os.path.join(self.config.fmap_save_path, "fmap.pkl"), 'wb') as f:
+            with open(os.path.join(self.config.fmap_save_path, "fmap_5000.pkl"), 'wb') as f:
                 pickle.dump(self.layer_info_dict, f, pickle.HIGHEST_PROTOCOL)
 
 
