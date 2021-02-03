@@ -9,13 +9,16 @@ from abc import ABCMeta, abstractclassmethod
 from copy import deepcopy
 from utils.utils import AverageMeter, accuracy, progress_bar
 
+
 class Pruner(metaclass=ABCMeta):
     @abstractclassmethod
     def prune_layer(self, idx, ratio):
         pass
+
     @abstractclassmethod
     def prune(self, ratios):
         pass
+
 
 class LassoPruner(Pruner):
     def __init__(self, config):
@@ -34,6 +37,7 @@ class LassoPruner(Pruner):
         self.pruner = get_pruner(self.config.pruner)
         self._load_checkpoint()
         self._build_index()
+        self.pruning_info = list()
         if self.config.fmap_path is not None:
             self._load_layer_info(self.config.fmap_path)
         else:
@@ -46,7 +50,7 @@ class LassoPruner(Pruner):
         assert os.path.exists(self.ckpt)
         checkpoint = torch.load(self.ckpt)
         if 'state_dict' in checkpoint:
-           checkpoint = checkpoint['state_dict']
+            checkpoint = checkpoint['state_dict']
         checkpoint = {k.replace('module.', ''): v for k, v in checkpoint.items()}
         self.model.load_state_dict(checkpoint)
         self.pruned_model = deepcopy(self.model)
@@ -156,6 +160,18 @@ class LassoPruner(Pruner):
             with open(os.path.join(self.config.fmap_save_path, "fmap_5000.pkl"), 'wb') as f:
                 pickle.dump(self.layer_info_dict, f, pickle.HIGHEST_PROTOCOL)
 
+    def _record_pruning_layer(self, idx, op, orig_chn, remain_chn):
+        pruning_unit = dict()
+        pruning_unit['layer idx'] = idx
+        pruning_unit['orig_chn'] = orig_chn
+        pruning_unit['remain_chn'] = remain_chn
+        op_type = 'Unkown'
+        if type(op) == torch.nn.Conv2d:
+            op_type = 'Conv2d'
+        elif type(op) == torch.nn.Linear:
+            op_type = 'Linear'
+        pruning_unit['type'] = op_type
+        self.pruning_info.append(pruning_unit)
 
     def _prune_prev_layer(self, layer_ind, weights, filter_inds):
         if self.policy is not None:
@@ -171,14 +187,15 @@ class LassoPruner(Pruner):
             op = list(self.model.modules())[idx]
             W = op.weight.data.cpu().numpy()
             n, c = W.shape[0], W.shape[1]
-            c_new = int(c*(1-sparsity_ratio))
+            c_new = int(c * (1 - sparsity_ratio))
             # keep_inds, keep_num = lasso_pruning(X, Y, W, c_new, debug=False)
             keep_inds, keep_num = self.pruner(X, Y, W, c_new, debug=False)
-            W_rec= weight_reconstruction(X, Y, W, keep_inds, debug=False)
+            W_rec = weight_reconstruction(X, Y, W, keep_inds, debug=False)
             # # assign new weight to pruned model
             # p_op = list(self.pruned_model.modules())[idx]
             # p_op.weight.data = torch.from_numpy(W_rec).to(self.device)
             self._prune_prev_layer(idx, W_rec, keep_inds)
+            self._record_pruning_layer(idx, op, c, keep_num)
             return c, W, keep_num, W_rec
 
     def prune(self, ratios):
@@ -186,7 +203,7 @@ class LassoPruner(Pruner):
             print("pruning layer {}, pruning ratio {}".format(idx, ratio))
             self.prune_layer(idx, ratio)
 
-    def metric(self,):
+    def metric(self, ):
         if self.val_dataloader is not None and self.criterion is not None:
             losses = AverageMeter()
             top1 = AverageMeter()
@@ -206,3 +223,16 @@ class LassoPruner(Pruner):
 
                     progress_bar(batch_idx, len(self.val_dataloader), 'Loss: {:.3f} | Acc1: {:.3f}% | Acc5: {:.3f}%'
                                  .format(losses.avg, top1.avg, top5.avg))
+
+    def save_pruned_model(self, save_dir = None):
+        if not os.path.exists(save_dir):
+            print("dir {} does not exist".format(save_dir))
+            return
+
+        filename = os.path.join(save_dir, self.config.name + '_pruned.pth.tar')
+        state_dict = {
+            'state_dict': self.pruned_model.module.state_dict() \
+                if isinstance(self.pruned_model, nn.DataParallel) else self.pruned_model.state_dict(),
+            'pruning_info': self.pruning_info
+        }
+        torch.save(state_dict, filename)

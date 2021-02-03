@@ -6,7 +6,7 @@ import torch
 import torch.nn as nn
 import torchvision.datasets as datasets
 import torchvision.transforms as transforms
-from vgg16_pruning_policy import vgg16_pruning_policy
+from vgg16_pruning_policy import vgg16_pruning_policy, vgg16_ratios
 
 normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                  std=[0.229, 0.224, 0.225])
@@ -42,7 +42,8 @@ val_loader = torch.utils.data.DataLoader(
 
 vgg16 = vgg16_bn()
 
-lassopruner_config = LassoPruneConfig(vgg16,
+lassopruner_config = LassoPruneConfig('vgg16',
+                                      vgg16,
                                       "vgg16_bn-6c64b313.pth",
                                       train_dataloader=train_loader,
                                       pruner='lasso',
@@ -70,24 +71,11 @@ vgg16_ratios = { 5: 0.5,
                  32: 0.2
                  }
 '''
-vgg16_ratios = { 5: 0.5,
-                 9: 0.5, # conv2
-                12: 0.5,
-                16: 0.5, # conv3
-                19: 0.5,
-                22: 0.5,
-                26: 0.2, # conv4
-                29: 0.2,
-                32: 0.2
-                 }
-
-# vgg16_ratios = {5: 0.5, 9: 0.5, 16: 0.4, 19: 0.5, 22: 0.4, 29: 0.4}
-# vgg16_ratios = {5: 0.5, 9: 0.5, 16: 0.4}
 
 # lassopruner.prune_layer(26, 0.5)
 lassopruner.prune(vgg16_ratios)
-
 lassopruner.metric()
+lassopruner.save_pruned_model('./')
 
 
 
