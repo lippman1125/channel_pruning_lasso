@@ -5,7 +5,8 @@ import cv2
 import sys
 import numpy as np
 
-# after pruning, top1 = 63.536%
+# vgg16_ratios = {5: 0.5}
+# after pruning, top1 = 59.728%
 vgg16_ratios = { 5: 0.5,
                  9: 0.5, # conv2
                 12: 0.5,
@@ -17,7 +18,7 @@ vgg16_ratios = { 5: 0.5,
                 32: 0.2
                 }
 
-# after pruning, top1 = 63.536%
+# # after pruning, top1 = 63.536%
 # vgg16_ratios = { 5: 0.5,
 #                  9: 0.5, # conv2
 #                  12: 0.5,

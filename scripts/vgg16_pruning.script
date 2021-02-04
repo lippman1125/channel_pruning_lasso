@@ -1,0 +1,7 @@
+python3 main.py --model vgg16_bn \
+                --batch_size 50 \
+                --calib_batch 10 \
+                --calib_dir /home/lqy/data/imagenet1k_calib \
+                --valid_dir /home/lqy/data/ILSVRC2012/val \
+                --pruner lasso \
+                --ckpt /home/lqy/workshop/amc/checkpoints/vgg16_bn-6c64b313.pth
