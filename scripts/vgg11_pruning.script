@@ -1,6 +1,6 @@
 python3 main.py --model vgg11_bn \
                 --batch_size 50 \
-                --calib_batch 20 \
+                --calib_batch 30 \
                 --calib_dir /home/lqy/data/imagenet1k_calib \
                 --valid_dir /home/lqy/data/ILSVRC2012/val \
                 --pruner lasso \
