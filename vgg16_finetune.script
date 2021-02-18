@@ -1,0 +1,10 @@
+CUDA_VISIBLE_DEVICES=7 python3 train.py --data_root /data/ILSVRC2012 \
+                                        --model vgg16_bn_x \
+                                        --lr 1e-04 \
+                                        --lr_type cos \
+                                        --dataset imagenet \
+                                        --n_epoch 15 \
+                                        --batch_size 128 \
+                                        --ckpt_path vgg16_pruned.pth.tar \
+                                        --seed 1
+     

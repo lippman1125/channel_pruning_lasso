@@ -35,10 +35,10 @@ After pruning:
 ```
 python3 train.py --data_root /data/ILSVRC2012 \
                  --model vgg16_bn_x \
-                 --lr 1e-05 \
-                 --lr_type fixed \
+                 --lr 1e-03 \
+                 --lr_type cos \
                  --dataset imagenet \
-                 --n_epoch 10 \
+                 --n_epoch 30 \
                  --batch_size 128 \
                  --ckpt_path vgg16_pruned.pth.tar \
                  --seed 1
@@ -51,7 +51,7 @@ python3 test.py --model vgg16_bn_x \
                 --imagenet_path /data/ILSVRC2012/
 ```
 After finetuning:  
-&ensp;&ensp;Top1 acc=69.924%, Top5=89.542%
+&ensp;&ensp;Top1 acc=73.584%, Top5=91.490%
 
 Orig:  
 &ensp;&ensp;Top1 acc=73.476%, Top5=91.536% 
